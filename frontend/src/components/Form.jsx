@@ -16,7 +16,7 @@ export default function Form() {
     state: "",
     pincode: "",
     email: "",
-    mobile: "",
+    mobile: "+91",
     income: "",
     loanAmount: prefillLoan,
     tenure: "",
@@ -51,7 +51,24 @@ export default function Form() {
     if (!formData.state.trim()) newErrors.state = "Please enter state";
     if (!/^\d{6}$/.test(formData.pincode)) newErrors.pincode = "Enter valid 6-digit pincode";
     if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(formData.email)) newErrors.email = "Only Gmail allowed";
-    if (!/^(\+91)[6-9]\d{9}$/.test(formData.mobile)) newErrors.mobile = "Mobile must start with +91";
+    const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  if (name === "mobile") {
+    // Agar user +91 mitaane ki koshish kare, toh use rok do
+    if (!value.startsWith("+91")) {
+      setFormData({ ...formData, mobile: "+91" });
+    } else {
+      // Sirf numbers allow karne ke liye (Optional par achha hai)
+      const numberPart = value.slice(3);
+      if (/^\d*$/.test(numberPart) && numberPart.length <= 10) {
+        setFormData({ ...formData, mobile: value });
+      }
+    }
+  } else {
+    setFormData({ ...formData, [name]: value });
+  }
+};
     if (!formData.income || Number(formData.income) < 15000) newErrors.income = "Income must be ₹15,000+";
     if (!formData.loanAmount || Number(formData.loanAmount) < 20000 || Number(formData.loanAmount) > 1550000)
       newErrors.loanAmount = "Loan ₹20k - ₹15.5L only";
