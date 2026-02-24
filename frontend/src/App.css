@@ -88,7 +88,7 @@ body, html {
 /* ===== HAMBURGER ICON ===== */
 
 .hamburger {
-  display: none;
+  display: none; /* Desktop par chhupa rahega */
   flex-direction: column;
   gap: 5px;
   cursor: pointer;
@@ -96,10 +96,11 @@ body, html {
 
 .hamburger span {
   width: 25px;
-  height: 3px;
-  background: #174d9e9f;
+  height: 3px;          /* Ise check karo */
+  background: #0d47a1; /* Ise check karo (Dark Blue) */
   border-radius: 1px;
-  transition: .5s;
+  transition: 0.3s;
+  display: block;       /* Ye line add kar do */
 }
 
 /* Animate burger into X */
@@ -118,6 +119,28 @@ body, html {
 /* ===== MOBILE NAV ===== */
 
 @media (max-width: 768px) {
+  @media (max-width: 768px) {
+  .hamburger {
+    display: flex !important; /* Ye wapas layega hamburger ko */
+    margin-left: auto;
+  }
+
+  .nav-items {
+    display: none; /* Default menu hide */
+  }
+
+  .nav-items.open {
+    display: flex; /* Click karne par menu dikhega */
+    position: absolute;
+    top: 65px;
+    left: 0;
+    width: 100%;
+    background: white;
+    flex-direction: column;
+    padding: 25px 0;
+    z-index: 1000;
+  }
+}
   .nav-items.open {
     display: flex;
     position: absolute;
