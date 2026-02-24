@@ -2,11 +2,14 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  max-width: 100%; /* Ise add karo, ye overflow rokega */
 }
 
 body, html {
   margin: 0;
   padding: 0;
+  width: 100%;
+  overflow-x: hidden; /* Screen ke bahar wala hissa chhupa dega */
 }
 
 .app-root {
@@ -115,36 +118,21 @@ body, html {
 /* ===== MOBILE NAV ===== */
 
 @media (max-width: 768px) {
-
-  .navbar-container {
-    position: relative;
-  }
-
-  .nav-items {
-    display: none;
-  }
-
   .nav-items.open {
     display: flex;
     position: absolute;
-    top: 65px;
+    top: 60px; /* Thoda adjust kiya */
     left: 0;
-    width: 100%;
+    right: 0; /* Left aur Right dono 0 rakho taaki perfectly center rahe */
+    width: 100vw; /* Poori screen width */
     background: white;
     flex-direction: column;
-    gap: 20px;
-    padding: 25px 0;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-    text-align: center;
+    gap: 15px;
+    padding: 20px 0;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    z-index: 999;
   }
-
-  .hamburger {
-    display: flex;
-    margin-left: auto;
-  }
-
 }
-
 
 /* ===== HERO SECTION ===== */
 .hero {
@@ -727,6 +715,15 @@ body, html {
   .hero h1 {
     font-size: 22px;
   }
+
+  @media (max-width: 480px) {
+  .hero::before {
+    width: 300px; /* Mobile par chota circle */
+    height: 300px;
+    right: -20%;
+    top: -20%;
+  }
+}
   
   /* Baaki text bhale hi chota rahe, par input 16px hi rahega */
   .faq-question, .footer-col p {

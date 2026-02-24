@@ -16,7 +16,7 @@ export default function Form() {
     state: "",
     pincode: "",
     email: "",
-    mobile: "+91",
+    mobile: "+91", // Default value set
     income: "",
     loanAmount: prefillLoan,
     tenure: "",
@@ -26,9 +26,24 @@ export default function Form() {
   const [isValid, setIsValid] = useState(false);
   const [status, setStatus] = useState("");
 
+  // Handle Change: Mobile logic fixed here
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+
+    if (name === "mobile") {
+      // 1. Agar user +91 mitaane ki koshish kare
+      if (!value.startsWith("+91")) {
+        setFormData((prev) => ({ ...prev, mobile: "+91" }));
+        return;
+      }
+      // 2. Sirf digits allow karein (+91 ke baad 10 digit tak)
+      const numberPart = value.slice(3);
+      if (/^\d*$/.test(numberPart) && numberPart.length <= 10) {
+        setFormData((prev) => ({ ...prev, mobile: value }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   useEffect(() => {
@@ -51,24 +66,12 @@ export default function Form() {
     if (!formData.state.trim()) newErrors.state = "Please enter state";
     if (!/^\d{6}$/.test(formData.pincode)) newErrors.pincode = "Enter valid 6-digit pincode";
     if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(formData.email)) newErrors.email = "Only Gmail allowed";
-    const handleChange = (e) => {
-  const { name, value } = e.target;
-
-  if (name === "mobile") {
-    // Agar user +91 mitaane ki koshish kare, toh use rok do
-    if (!value.startsWith("+91")) {
-      setFormData({ ...formData, mobile: "+91" });
-    } else {
-      // Sirf numbers allow karne ke liye (Optional par achha hai)
-      const numberPart = value.slice(3);
-      if (/^\d*$/.test(numberPart) && numberPart.length <= 10) {
-        setFormData({ ...formData, mobile: value });
-      }
+    
+    // Mobile Validation
+    if (!/^(\+91)[6-9]\d{9}$/.test(formData.mobile)) {
+        newErrors.mobile = "Enter valid 10-digit number after +91";
     }
-  } else {
-    setFormData({ ...formData, [name]: value });
-  }
-};
+
     if (!formData.income || Number(formData.income) < 15000) newErrors.income = "Income must be ₹15,000+";
     if (!formData.loanAmount || Number(formData.loanAmount) < 20000 || Number(formData.loanAmount) > 1550000)
       newErrors.loanAmount = "Loan ₹20k - ₹15.5L only";
@@ -108,16 +111,16 @@ export default function Form() {
         setShowPopup(true);
         setFormData({
           fullName: "", pan: "", aadhaar: "", dob: "", state: "",
-          pincode: "", email: "", mobile: "", income: "",
+          pincode: "", email: "", mobile: "+91", income: "",
           loanAmount: prefillLoan, tenure: "",
         });
         setStatus("");
       } else {
-        setStatus("Failed to submit form");
+        setStatus("❌ Failed to submit form");
       }
     } catch (err) {
       console.error(err);
-      setStatus("Server error");
+      setStatus("❌ Server error");
     }
   };
 
@@ -186,7 +189,13 @@ export default function Form() {
 
             <div className="input-container">
               <label>Mobile Number</label>
-              <input type="text" name="mobile" placeholder="+91XXXXXXXXXX" value={formData.mobile} onChange={handleChange} className={errors.mobile ? "invalid" : ""} />
+              <input 
+                type="text" 
+                name="mobile" 
+                value={formData.mobile} 
+                onChange={handleChange} 
+                className={errors.mobile ? "invalid" : ""} 
+              />
               {errors.mobile && <span className="error-msg">{errors.mobile}</span>}
             </div>
           </div>
