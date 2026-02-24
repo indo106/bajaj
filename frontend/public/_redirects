@@ -1,1 +1,5 @@
-api/* https://bajaj-backend-f4fx.onrender.com/api/:splat  200
+# API Redirect (Jo pehle se tha)
+/api/* https://bajaj-backend-f4fx.onrender.com/api/:splat  200
+
+# React Router Fix (Ye nayi line hai)
+/* /index.html  200
