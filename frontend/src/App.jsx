@@ -95,7 +95,7 @@ const testimonials = [
             {/* Hero Section */}
             <section className="hero">
               <div className="hero-content">
-                <h1>Get Your Personal Loan at the Best Rates</h1>
+                <h1>Get Your Personal Loan at the Best Intrest Rates</h1>
                 <p>Loans up to 15 Lakhs | Fast Approval | No Hidden Charges</p>
               </div>
               <div className="loan-selector-section">
@@ -233,12 +233,12 @@ const testimonials = [
                 <div className="footer-col">
                   <h4>Contact</h4>
                   <p>📞 1-800-270-7000</p>
-                  <p>✉️ support@statebankofindia.com</p>
+                  <p>✉️ support@baajajfinserv.com</p>
                   <p>🏢 Mumbai, India</p>
                 </div>
               </div>
               <div className="footer-bottom">
-                <p>&copy; 2025 S.B.I All rights reserved.</p>
+                <p>&copy; 2025 BAJAJ All rights reserved.</p>
               </div>
             </footer>
           </div>

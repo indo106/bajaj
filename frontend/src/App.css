@@ -712,3 +712,31 @@ body, html {
     font-size: 14px;
   }
 }
+
+/* Mobile Input Zoom Fix */
+@media (max-width: 768px) {
+  input, 
+  select, 
+  textarea {
+    font-size: 16px !important; /* 16px minimum for mobile to prevent auto-zoom */
+  }
+}
+
+/* Specific change for your small mobile view */
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 22px;
+  }
+  
+  /* Baaki text bhale hi chota rahe, par input 16px hi rahega */
+  .faq-question, .footer-col p {
+    font-size: 14px;
+  }
+}
+.app-root {
+  min-height: 100vh;
+  width: 100%; /* Use 100% instead of 100vw to avoid scroll issues */
+  overflow-x: hidden; /* Extra safety */
+  background: #f8f9fa;
+  /* ... rest of your code */
+}
