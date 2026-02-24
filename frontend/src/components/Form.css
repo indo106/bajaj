@@ -76,28 +76,37 @@
   margin-left: 2px;
 }
 
+/* Input styles fix */
 input {
   padding: 0.8rem 1rem;
   border-radius: 10px;
   border: 1.5px solid #e2e8f0;
-  font-size: 1rem;
+  font-size: 16px; /* 16px se kam hone par iPhone zoom karta hai, isliye 16px best hai */
   font-family: inherit;
   transition: all 0.2s ease;
-  background: #fcfcfd;
+  background: #ffffff !important; /* Force white background */
+  color: #1e293b !important;    /* Force dark text color so it's visible */
+  width: 100%;
+  box-sizing: border-box;       /* Padding se width kharab na ho */
 }
 
+/* Mobile par typing ke waqt visibility maintain karne ke liye */
 input:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-  background: #fff;
+  background: #ffffff !important;
+  color: #1e293b !important;
 }
 
-input.invalid {
-  border-color: var(--error);
-  background: #fffafa;
+/* Autofill fix (Jab Google chrome khud details bharta hai tab bhi white dikhta hai) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #1e293b;
+  -webkit-box-shadow: 0 0 0px 1000px white inset;
+  transition: background-color 5000s ease-in-out 0s;
 }
-
 .error-msg {
   font-size: 0.75rem;
   color: var(--error);
