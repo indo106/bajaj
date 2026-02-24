@@ -96,11 +96,11 @@ export default function Form() {
         });
         setStatus("");
       } else {
-        setStatus("❌ Failed to submit form");
+        setStatus("Failed to submit form");
       }
     } catch (err) {
       console.error(err);
-      setStatus("❌ Server error");
+      setStatus("Server error");
     }
   };
 

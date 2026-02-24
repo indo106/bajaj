@@ -133,7 +133,7 @@ const testimonials = [
               </div>
               <div className="eligibility-grid">
                 <div className="eligibility-card">
-                  <h3>📋 Eligibility Criteria</h3>
+                  <h3> Eligibility Criteria</h3>
                   <ul>
                     <li>Age: 21 to 60 years</li>
                     <li>Minimum income: ₹3,00,000 per annum</li>

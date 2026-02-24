@@ -86,8 +86,8 @@ export default function EmiCalculator() {
               className="slider"
             />
             <div className="range-labels">
-              <span>₹20K</span>
-              <span>₹15.5L</span> 
+              <span>20K</span>
+              <span>15.5L</span> 
             </div>
             <input
               type="number"
