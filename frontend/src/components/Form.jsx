@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./Form.css";
+import logo from '/src/assets/logo.png';
+
 
 export default function Form() {
+
   const navigate = useNavigate();
   const location = useLocation();
   const prefillLoan = location.state?.loanAmount || "";
@@ -130,9 +133,14 @@ export default function Form() {
   };
 
   return (
+    
     <div className="page-container">
       <div className="form-wrapper">
+          
         <div className="form-header">
+          <div className="logo">
+                <img src={logo} alt="SBI Logo" />
+                </div>
           <h2>Loan Application</h2>
           <p>Fill in the details to get your loan approved fast.</p>
         </div>
@@ -141,13 +149,13 @@ export default function Form() {
           <div className="form-row">
             <div className="input-container">
               <label>Full Name</label>
-              <input type="text" name="fullName" placeholder="John Doe" value={formData.fullName} onChange={handleChange} className={errors.fullName ? "invalid" : ""} />
+              <input type="text" name="fullName" placeholder="Enter full name" value={formData.fullName} onChange={handleChange} className={errors.fullName ? "invalid" : ""} />
               {errors.fullName && <span className="error-msg">{errors.fullName}</span>}
             </div>
 
             <div className="input-container">
               <label>PAN Number</label>
-              <input type="text" name="pan" placeholder="ABCDE1234F" value={formData.pan} onChange={handleChange} className={errors.pan ? "invalid" : ""} />
+              <input type="text" name="pan" placeholder="Enter PAN Number" value={formData.pan} onChange={handleChange} className={errors.pan ? "invalid" : ""} />
               {errors.pan && <span className="error-msg">{errors.pan}</span>}
             </div>
           </div>
