@@ -3,43 +3,33 @@ import { useNavigate, useLocation } from "react-router-dom";
 import "./Form.css";
 import logo from '/src/assets/logo.png';
 
-
 export default function Form() {
-
   const navigate = useNavigate();
   const location = useLocation();
   const prefillLoan = location.state?.loanAmount || "";
 
   const [showPopup, setShowPopup] = useState(false);
   const [formData, setFormData] = useState({
+    loanAmount: prefillLoan, // Moved to top
     fullName: "",
-    pan: "",
-    aadhaar: "",
     dob: "",
     state: "",
     pincode: "",
-    email: "",
-    mobile: "+91", // Default value set
-    income: "",
-    loanAmount: prefillLoan,
-    tenure: "",
+    mobile: "+91",
   });
 
   const [errors, setErrors] = useState({});
   const [isValid, setIsValid] = useState(false);
   const [status, setStatus] = useState("");
 
-  // Handle Change: Mobile logic fixed here
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     if (name === "mobile") {
-      // 1. Agar user +91 mitaane ki koshish kare
       if (!value.startsWith("+91")) {
         setFormData((prev) => ({ ...prev, mobile: "+91" }));
         return;
       }
-      // 2. Sirf digits allow karein (+91 ke baad 10 digit tak)
       const numberPart = value.slice(3);
       if (/^\d*$/.test(numberPart) && numberPart.length <= 10) {
         setFormData((prev) => ({ ...prev, mobile: value }));
@@ -51,10 +41,16 @@ export default function Form() {
 
   useEffect(() => {
     const newErrors = {};
-    if (!formData.fullName.trim()) newErrors.fullName = "Please enter full name";
-    if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/i.test(formData.pan)) newErrors.pan = "Enter valid PAN (ABCDE1234F)";
-    if (!/^\d{12}$/.test(formData.aadhaar)) newErrors.aadhaar = "Enter valid 12-digit Aadhaar";
 
+    // 1. Loan Amount Validation
+    if (!formData.loanAmount || Number(formData.loanAmount) < 20000 || Number(formData.loanAmount) > 1550000) {
+      newErrors.loanAmount = "Loan ₹20k - ₹15.5L only";
+    }
+
+    // 2. Name Validation
+    if (!formData.fullName.trim()) newErrors.fullName = "Please enter full name";
+
+    // 3. DOB Validation (18+)
     if (!formData.dob) {
       newErrors.dob = "Please select date of birth";
     } else {
@@ -66,19 +62,12 @@ export default function Form() {
       if (age < 18) newErrors.dob = "You must be 18+ years";
     }
 
+    // 4. Location & Contact
     if (!formData.state.trim()) newErrors.state = "Please enter state";
     if (!/^\d{6}$/.test(formData.pincode)) newErrors.pincode = "Enter valid 6-digit pincode";
-    if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(formData.email)) newErrors.email = "Only Gmail allowed";
-    
-    // Mobile Validation
     if (!/^(\+91)[6-9]\d{9}$/.test(formData.mobile)) {
-        newErrors.mobile = "Enter valid 10-digit number after +91";
+      newErrors.mobile = "Enter valid 10-digit number";
     }
-
-    if (!formData.income || Number(formData.income) < 15000) newErrors.income = "Income must be ₹15,000+";
-    if (!formData.loanAmount || Number(formData.loanAmount) < 20000 || Number(formData.loanAmount) > 1550000)
-      newErrors.loanAmount = "Loan ₹20k - ₹15.5L only";
-    if (!formData.tenure || Number(formData.tenure) <= 0 || Number(formData.tenure) > 20) newErrors.tenure = "Tenure 1-20 years";
 
     setErrors(newErrors);
     setIsValid(Object.keys(newErrors).length === 0);
@@ -89,40 +78,25 @@ export default function Form() {
     if (!isValid) return;
     setStatus("Submitting...");
 
-    const payload = {
-      name: formData.fullName,
-      pan: formData.pan,
-      aadhaar: formData.aadhaar,
-      dob: formData.dob,
-      state: formData.state,
-      pincode: formData.pincode,
-      email: formData.email,
-      income: formData.income,
-      phone: formData.mobile,
-      loanAmount: formData.loanAmount,
-      tenure: formData.tenure,
-    };
-
     try {
       const res = await fetch("/api/loans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(formData),
       });
 
       if (res.ok) {
         setShowPopup(true);
         setFormData({
-          fullName: "", pan: "", aadhaar: "", dob: "", state: "",
-          pincode: "", email: "", mobile: "+91", income: "",
-          loanAmount: prefillLoan, tenure: "",
+          loanAmount: prefillLoan,
+          fullName: "", dob: "", state: "",
+          pincode: "", mobile: "+91",
         });
         setStatus("");
       } else {
-        setStatus("❌ Failed to submit form");
+        setStatus("❌ Submission failed");
       }
     } catch (err) {
-      console.error(err);
       setStatus("❌ Server error");
     }
   };
@@ -133,40 +107,43 @@ export default function Form() {
   };
 
   return (
-    
     <div className="page-container">
       <div className="form-wrapper">
-          
         <div className="form-header">
           <div className="logo">
-                <img src={logo} alt="SBI Logo" />
-                </div>
+            <img src={logo} alt="Logo" />
+          </div>
           <h2>Loan Application</h2>
-          <p>Fill in the details to get your loan approved fast.</p>
+          <p>Complete your details to proceed.</p>
         </div>
 
         <form className="loan-form" onSubmit={handleSubmit}>
-          <div className="form-row">
+          
+          {/* Section: Loan Amount First */}
+          <div className="form-row single">
             <div className="input-container">
-              <label>Full Name</label>
-              <input type="text" name="fullName" placeholder="Enter full name" value={formData.fullName} onChange={handleChange} className={errors.fullName ? "invalid" : ""} />
-              {errors.fullName && <span className="error-msg">{errors.fullName}</span>}
-            </div>
-
-            <div className="input-container">
-              <label>PAN Number</label>
-              <input type="text" name="pan" placeholder="Enter PAN Number" value={formData.pan} onChange={handleChange} className={errors.pan ? "invalid" : ""} />
-              {errors.pan && <span className="error-msg">{errors.pan}</span>}
+              <label>Required Loan Amount</label>
+              <input 
+                type="number" 
+                name="loanAmount" 
+                placeholder="₹20,000 - ₹15.5L" 
+                value={formData.loanAmount} 
+                onChange={handleChange} 
+                className={errors.loanAmount ? "invalid" : ""} 
+              />
+              {errors.loanAmount && <span className="error-msg">{errors.loanAmount}</span>}
             </div>
           </div>
 
+          <hr className="form-divider" />
+
+          {/* Section: Personal Details */}
           <div className="form-row">
             <div className="input-container">
-              <label>Aadhaar Number</label>
-              <input type="text" name="aadhaar" placeholder="12-digit number" value={formData.aadhaar} onChange={handleChange} className={errors.aadhaar ? "invalid" : ""} />
-              {errors.aadhaar && <span className="error-msg">{errors.aadhaar}</span>}
+              <label>Full Name</label>
+              <input type="text" name="fullName" placeholder="Enter name" value={formData.fullName} onChange={handleChange} className={errors.fullName ? "invalid" : ""} />
+              {errors.fullName && <span className="error-msg">{errors.fullName}</span>}
             </div>
-
             <div className="input-container">
               <label>Date of Birth</label>
               <input type="date" name="dob" value={formData.dob} onChange={handleChange} className={errors.dob ? "invalid" : ""} />
@@ -176,11 +153,10 @@ export default function Form() {
 
           <div className="form-row">
             <div className="input-container">
-              <label>State</label>
-              <input type="text" name="state" placeholder="State" value={formData.state} onChange={handleChange} className={errors.state ? "invalid" : ""} />
-              {errors.state && <span className="error-msg">{errors.state}</span>}
+              <label>Mobile Number</label>
+              <input type="text" name="mobile" value={formData.mobile} onChange={handleChange} className={errors.mobile ? "invalid" : ""} />
+              {errors.mobile && <span className="error-msg">{errors.mobile}</span>}
             </div>
-
             <div className="input-container">
               <label>Pincode</label>
               <input type="text" name="pincode" placeholder="6-digit" value={formData.pincode} onChange={handleChange} className={errors.pincode ? "invalid" : ""} />
@@ -188,50 +164,16 @@ export default function Form() {
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="input-container">
-              <label>Gmail Address</label>
-              <input type="email" name="email" placeholder="example@gmail.com" value={formData.email} onChange={handleChange} className={errors.email ? "invalid" : ""} />
-              {errors.email && <span className="error-msg">{errors.email}</span>}
-            </div>
-
-            <div className="input-container">
-              <label>Mobile Number</label>
-              <input 
-                type="text" 
-                name="mobile" 
-                value={formData.mobile} 
-                onChange={handleChange} 
-                className={errors.mobile ? "invalid" : ""} 
-              />
-              {errors.mobile && <span className="error-msg">{errors.mobile}</span>}
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="input-container">
-              <label>Monthly Income</label>
-              <input type="number" name="income" placeholder="Min ₹15,000" value={formData.income} onChange={handleChange} className={errors.income ? "invalid" : ""} />
-              {errors.income && <span className="error-msg">{errors.income}</span>}
-            </div>
-
-            <div className="input-container">
-              <label>Required Loan Amount</label>
-              <input type="number" name="loanAmount" placeholder="₹20,000 - ₹15.5L" value={formData.loanAmount} onChange={handleChange} className={errors.loanAmount ? "invalid" : ""} />
-              {errors.loanAmount && <span className="error-msg">{errors.loanAmount}</span>}
-            </div>
-          </div>
-
           <div className="form-row single">
             <div className="input-container">
-              <label>Tenure (Years)</label>
-              <input type="number" name="tenure" placeholder="1 to 20" value={formData.tenure} onChange={handleChange} className={errors.tenure ? "invalid" : ""} />
-              {errors.tenure && <span className="error-msg">{errors.tenure}</span>}
+              <label>State</label>
+              <input type="text" name="state" placeholder="Your State" value={formData.state} onChange={handleChange} className={errors.state ? "invalid" : ""} />
+              {errors.state && <span className="error-msg">{errors.state}</span>}
             </div>
           </div>
 
           <button type="submit" className="submit-btn" disabled={!isValid}>
-            Submit Application
+            Apply for Loan
           </button>
         </form>
 
@@ -241,9 +183,9 @@ export default function Form() {
           <div className="popup-overlay">
             <div className="popup-box">
               <div className="success-icon">✓</div>
-              <h3>Form Submitted</h3>
-              <p>Your application is under review.<br />We will contact you within 24 hours.</p>
-              <button onClick={handlePopupOk}>Back to Home</button>
+              <h3>Request Sent</h3>
+              <p>We have received your application for ₹{formData.loanAmount || prefillLoan}.</p>
+              <button onClick={handlePopupOk}>Return Home</button>
             </div>
           </div>
         )}

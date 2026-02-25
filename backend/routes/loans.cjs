@@ -7,40 +7,29 @@ const Loan = require('../models/Loan.cjs');
 router.post('/', async (req, res) => {
   try {
     const {
-      name,
-      pan,
-      aadhaar,
-      dob,
-      state,
-      pincode,
-      email,
-      income,
-      phone,
       loanAmount,
-      tenure
+      fullName,
+      dob,
+      mobile,
+      pincode,
+      state
     } = req.body;
 
-    // ✅ Validate required fields
+    // ✅ Validate only the required fields remaining
     if (
-      !name || !pan || !aadhaar || !dob || !state ||
-      !pincode || !email || !income || !phone || !loanAmount || !tenure
+      !loanAmount || !fullName || !dob || !mobile || !pincode || !state
     ) {
-      return res.status(400).json({ message: 'All fields are required' });
+      return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // ✅ Create new loan document
+    // ✅ Create new loan document with cleaned data
     const loan = new Loan({
-      name,
-      pan,
-      aadhaar,
-      dob,
-      state,
-      pincode,
-      email,
-      income,
-      phone,
       loanAmount,
-      tenure
+      name: fullName, // Mapping fullName from frontend to name in DB
+      dob,
+      phone: mobile,  // Mapping mobile from frontend to phone in DB
+      pincode,
+      state
     });
 
     await loan.save();

@@ -1,7 +1,6 @@
 const express = require("express");
 const ExcelJS = require("exceljs");
 const Loan = require("../models/Loan.cjs");
-
 const router = express.Router();
 
 // POST /api/export
@@ -9,7 +8,7 @@ router.post("/export", async (req, res) => {
   try {
     const { password, date } = req.body;
 
-    // 🔐 password check
+    // 🔐 Password check (Ensure EXPORT_PASSWORD is in your .env)
     if (password !== process.env.EXPORT_PASSWORD) {
       return res.status(401).json({ message: "Invalid password" });
     }
@@ -18,10 +17,9 @@ router.post("/export", async (req, res) => {
       return res.status(400).json({ message: "Date is required" });
     }
 
-    // 🗓️ date range (full day)
+    // 🗓️ Date range (Full day: 00:00:00 to 23:59:59)
     const start = new Date(date);
     start.setHours(0, 0, 0, 0);
-
     const end = new Date(date);
     end.setHours(23, 59, 59, 999);
 
@@ -36,22 +34,27 @@ router.post("/export", async (req, res) => {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Loans");
 
+    // ✅ Cleaned columns to match your updated schema
     sheet.columns = [
-      { header: "Name", key: "name" },
-      { header: "PAN", key: "pan" },
-      { header: "Aadhaar", key: "aadhaar" },
-      { header: "DOB", key: "dob" },
-      { header: "State", key: "state" },
-      { header: "Pincode", key: "pincode" },
-      { header: "Email", key: "email" },
-      { header: "Income", key: "income" },
-      { header: "Phone", key: "phone" },
-      { header: "Loan Amount", key: "loanAmount" },
-      { header: "Tenure", key: "tenure" },
-      { header: "Created At", key: "createdAt" },
+      { header: "Loan Amount", key: "loanAmount", width: 15 },
+      { header: "Name", key: "name", width: 25 },
+      { header: "DOB", key: "dob", width: 15 },
+      { header: "Phone", key: "phone", width: 15 },
+      { header: "Pincode", key: "pincode", width: 10 },
+      { header: "State", key: "state", width: 20 },
+      { header: "Created At", key: "createdAt", width: 25 },
     ];
 
-    loans.forEach(l => sheet.addRow(l));
+    // Add rows
+    loans.forEach(l => {
+      sheet.addRow({
+        ...l,
+        createdAt: l.createdAt.toLocaleString() // Format date for Excel
+      });
+    });
+
+    // Formatting headers (Optional but nice)
+    sheet.getRow(1).font = { bold: true };
 
     res.setHeader(
       "Content-Type",
@@ -66,7 +69,7 @@ router.post("/export", async (req, res) => {
     res.end();
 
   } catch (err) {
-    console.error(err);
+    console.error("Export Error:", err);
     res.status(500).json({ message: "Export failed" });
   }
 });
