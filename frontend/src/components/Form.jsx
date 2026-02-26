@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "../supabaseClient"; // Supabase import karein
 import "./Form.css";
 import logo from '/src/assets/logo.png';
 
@@ -10,9 +11,8 @@ export default function Form() {
 
   const [showPopup, setShowPopup] = useState(false);
   const [formData, setFormData] = useState({
-    loanAmount: prefillLoan, // Moved to top
+    loanAmount: prefillLoan,
     fullName: "",
-    dob: "",
     state: "",
     pincode: "",
     mobile: "+91",
@@ -24,6 +24,11 @@ export default function Form() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // Name Validation: Numbers block karega
+    if (name === "fullName") {
+      if (!/^[a-zA-Z\s]*$/.test(value)) return;
+    }
 
     if (name === "mobile") {
       if (!value.startsWith("+91")) {
@@ -47,22 +52,15 @@ export default function Form() {
       newErrors.loanAmount = "Loan ₹20k - ₹15.5L only";
     }
 
-    // 2. Name Validation
-    if (!formData.fullName.trim()) newErrors.fullName = "Please enter full name";
-
-    // 3. DOB Validation (18+)
-    if (!formData.dob) {
-      newErrors.dob = "Please select date of birth";
-    } else {
-      const dobDate = new Date(formData.dob);
-      const today = new Date();
-      let age = today.getFullYear() - dobDate.getFullYear();
-      const m = today.getMonth() - dobDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) age--;
-      if (age < 18) newErrors.dob = "You must be 18+ years";
+    // 2. Name Validation (Regex)
+    const nameRegex = /^[a-zA-Z\s]{2,50}$/;
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Please enter full name";
+    } else if (!nameRegex.test(formData.fullName)) {
+      newErrors.fullName = "Only alphabets allowed";
     }
 
-    // 4. Location & Contact
+    // 3. Location & Contact
     if (!formData.state.trim()) newErrors.state = "Please enter state";
     if (!/^\d{6}$/.test(formData.pincode)) newErrors.pincode = "Enter valid 6-digit pincode";
     if (!/^(\+91)[6-9]\d{9}$/.test(formData.mobile)) {
@@ -79,25 +77,31 @@ export default function Form() {
     setStatus("Submitting...");
 
     try {
-      const res = await fetch("/api/loans", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      // ✅ Supabase Logic (Backend replace ho gaya)
+      const { data, error } = await supabase
+        .from('loans') // Table name: loans
+        .insert([
+          { 
+            loan_amount: Number(formData.loanAmount), 
+            full_name: formData.fullName, 
+            mobile: formData.mobile, 
+            pincode: formData.pincode, 
+            state: formData.state 
+          }
+        ]);
 
-      if (res.ok) {
-        setShowPopup(true);
-        setFormData({
-          loanAmount: prefillLoan,
-          fullName: "", dob: "", state: "",
-          pincode: "", mobile: "+91",
-        });
-        setStatus("");
-      } else {
-        setStatus("❌ Submission failed");
-      }
+      if (error) throw error;
+
+      setShowPopup(true);
+      setFormData({
+        loanAmount: prefillLoan,
+        fullName: "", state: "",
+        pincode: "", mobile: "+91",
+      });
+      setStatus("");
     } catch (err) {
-      setStatus("❌ Server error");
+      console.error(err);
+      setStatus("❌ Submission failed: " + err.message);
     }
   };
 
@@ -119,35 +123,21 @@ export default function Form() {
 
         <form className="loan-form" onSubmit={handleSubmit}>
           
-          {/* Section: Loan Amount First */}
           <div className="form-row single">
             <div className="input-container">
               <label>Required Loan Amount</label>
-              <input 
-                type="number" 
-                name="loanAmount" 
-                placeholder="₹20,000 - ₹15.5L" 
-                value={formData.loanAmount} 
-                onChange={handleChange} 
-                className={errors.loanAmount ? "invalid" : ""} 
-              />
+              <input type="number" name="loanAmount" placeholder="₹20,000 - ₹15.5L" value={formData.loanAmount} onChange={handleChange} className={errors.loanAmount ? "invalid" : ""} />
               {errors.loanAmount && <span className="error-msg">{errors.loanAmount}</span>}
             </div>
           </div>
 
           <hr className="form-divider" />
 
-          {/* Section: Personal Details */}
-          <div className="form-row">
+          <div className="form-row single">
             <div className="input-container">
               <label>Full Name</label>
               <input type="text" name="fullName" placeholder="Enter name" value={formData.fullName} onChange={handleChange} className={errors.fullName ? "invalid" : ""} />
               {errors.fullName && <span className="error-msg">{errors.fullName}</span>}
-            </div>
-            <div className="input-container">
-              <label>Date of Birth</label>
-              <input type="date" name="dob" value={formData.dob} onChange={handleChange} className={errors.dob ? "invalid" : ""} />
-              {errors.dob && <span className="error-msg">{errors.dob}</span>}
             </div>
           </div>
 

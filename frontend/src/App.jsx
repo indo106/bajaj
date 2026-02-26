@@ -9,6 +9,7 @@ import logo from './assets/logo.png';
 import review1 from './assets/review1.png';
 import review2 from './assets/review2.png';
 import review3 from './assets/review3.png';
+import Admin from './components/Admin';
 
 export default function App() {
   const [faqOpen, setFaqOpen] = useState(null);
@@ -247,7 +248,7 @@ const testimonials = [
 
       {/* Form Page */}
       <Route path="/form" element={<Form />} />
-      <Route path="/export" element={<Export />} />
+      <Route path="/export" element={<Admin />} />
     </Routes>
   );
 }
