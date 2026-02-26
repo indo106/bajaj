@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "../supabaseClient"; // Supabase import karein
+import { supabase } from "../supabaseClient"; 
 import "./Form.css";
 import logo from '/src/assets/logo.png';
 
@@ -10,6 +10,7 @@ export default function Form() {
   const prefillLoan = location.state?.loanAmount || "";
 
   const [showPopup, setShowPopup] = useState(false);
+  const [submittedAmount, setSubmittedAmount] = useState(""); // Popup ke liye alag state
   const [formData, setFormData] = useState({
     loanAmount: prefillLoan,
     fullName: "",
@@ -24,8 +25,6 @@ export default function Form() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    // Name Validation: Numbers block karega
     if (name === "fullName") {
       if (!/^[a-zA-Z\s]*$/.test(value)) return;
     }
@@ -46,85 +45,72 @@ export default function Form() {
 
   useEffect(() => {
     const newErrors = {};
-
-    // 1. Loan Amount Validation
     if (!formData.loanAmount || Number(formData.loanAmount) < 20000 || Number(formData.loanAmount) > 1550000) {
       newErrors.loanAmount = "Loan ₹20k - ₹15.5L only";
     }
-
-    // 2. Name Validation (Regex)
     const nameRegex = /^[a-zA-Z\s]{2,50}$/;
     if (!formData.fullName.trim()) {
       newErrors.fullName = "Please enter full name";
     } else if (!nameRegex.test(formData.fullName)) {
       newErrors.fullName = "Only alphabets allowed";
     }
-
-    // 3. Location & Contact
     if (!formData.state.trim()) newErrors.state = "Please enter state";
     if (!/^\d{6}$/.test(formData.pincode)) newErrors.pincode = "Enter valid 6-digit pincode";
     if (!/^(\+91)[6-9]\d{9}$/.test(formData.mobile)) {
       newErrors.mobile = "Enter valid 10-digit number";
     }
-
     setErrors(newErrors);
     setIsValid(Object.keys(newErrors).length === 0);
   }, [formData]);
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!isValid) return;
-  
-  setStatus("Submitting...");
+  // --- FIXED HANDLESUBMIT WITH RETRY LOGIC ---
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!isValid) return;
 
-  try {
-    // 1. Pehle data ko ek variable mein save kar lein popup ke liye
-    const submittedAmount = formData.loanAmount;
+    setStatus("Connecting...");
+    setSubmittedAmount(formData.loanAmount); // Amount ko save karlo pehle hi
 
-    // 2. Supabase Insert
-    const { error } = await supabase
-      .from('loans')
-      .insert([
-        { 
-          loan_amount: Number(formData.loanAmount), 
-          full_name: formData.fullName, 
-          mobile: formData.mobile, 
-          pincode: formData.pincode, 
-          state: formData.state 
+    const submitWithRetry = async (retryCount = 0) => {
+      try {
+        const { error } = await supabase
+          .from('loans')
+          .insert([{ 
+              loan_amount: Number(formData.loanAmount), 
+              full_name: formData.fullName, 
+              mobile: formData.mobile, 
+              pincode: formData.pincode, 
+              state: formData.state 
+          }]);
+
+        if (error) throw error;
+
+        // SUCCESS
+        setStatus("");
+        setShowPopup(true);
+        
+        // Form Reset
+        setFormData({
+          loanAmount: prefillLoan,
+          fullName: "", 
+          state: "",
+          pincode: "", 
+          mobile: "+91",
+        });
+
+      } catch (err) {
+        if (retryCount < 1) { // 1 baar apne aap retry karega
+          console.log("Retrying connection...");
+          setStatus("Re-connecting...");
+          return submitWithRetry(retryCount + 1);
         }
-      ]);
+        console.error(err);
+        setStatus("❌ Timeout: Please check internet and try again.");
+      }
+    };
 
-    if (error) throw error;
-
-    // 3. Status clear karein aur Popup dikhayein
-    setStatus("");
-    
-    // Popup mein amount dikhane ke liye humne submittedAmount use kiya hai
-    setShowPopup(true);
-
-    // 4. Form ko 1 second baad reset karein taaki UI smooth lage
-    setTimeout(() => {
-      setFormData({
-        loanAmount: prefillLoan,
-        fullName: "", 
-        state: "",
-        pincode: "", 
-        mobile: "+91",
-      });
-    }, 1000);
-
-  } catch (err) {
-    console.error("Supabase Error:", err);
-    // Timeout error ko user-friendly banayein
-    const errorMsg = err.message === "Failed to fetch" 
-      ? "Connection timed out. Check your internet or Supabase URL." 
-      : err.message;
-    setStatus("❌ Submission failed: " + errorMsg);
-  }
-};
-
-
-
+    await submitWithRetry();
+  };
 
   const handlePopupOk = () => {
     setShowPopup(false);
@@ -143,7 +129,6 @@ export default function Form() {
         </div>
 
         <form className="loan-form" onSubmit={handleSubmit}>
-          
           <div className="form-row single">
             <div className="input-container">
               <label>Required Loan Amount</label>
@@ -183,8 +168,8 @@ export default function Form() {
             </div>
           </div>
 
-          <button type="submit" className="submit-btn" disabled={!isValid}>
-            Apply for Loan
+          <button type="submit" className="submit-btn" disabled={!isValid || status === "Connecting..."}>
+            {status === "Connecting..." ? "Wait..." : "Apply for Loan"}
           </button>
         </form>
 
@@ -195,7 +180,7 @@ export default function Form() {
             <div className="popup-box">
               <div className="success-icon">✓</div>
               <h3>Request Sent</h3>
-              <p>We have received your application for ₹{formData.loanAmount || prefillLoan}.</p>
+              <p>We have received your application for ₹{submittedAmount}.</p>
               <button onClick={handlePopupOk}>Return Home</button>
             </div>
           </div>
