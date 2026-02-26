@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://lxiitvjhbpkatllnzpys.supabase.co'
-const supabaseAnonKey = 'sb_publishable_etbaiHYV6rIWObwFgH2iCg_hNbTQvVQ'
+// Vite mein variables ko access karne ka sahi tarika
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
