@@ -71,39 +71,60 @@ export default function Form() {
     setIsValid(Object.keys(newErrors).length === 0);
   }, [formData]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!isValid) return;
-    setStatus("Submitting...");
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!isValid) return;
+  
+  setStatus("Submitting...");
 
-    try {
-      // ✅ Supabase Logic (Backend replace ho gaya)
-      const { data, error } = await supabase
-        .from('loans') // Table name: loans
-        .insert([
-          { 
-            loan_amount: Number(formData.loanAmount), 
-            full_name: formData.fullName, 
-            mobile: formData.mobile, 
-            pincode: formData.pincode, 
-            state: formData.state 
-          }
-        ]);
+  try {
+    // 1. Pehle data ko ek variable mein save kar lein popup ke liye
+    const submittedAmount = formData.loanAmount;
 
-      if (error) throw error;
+    // 2. Supabase Insert
+    const { error } = await supabase
+      .from('loans')
+      .insert([
+        { 
+          loan_amount: Number(formData.loanAmount), 
+          full_name: formData.fullName, 
+          mobile: formData.mobile, 
+          pincode: formData.pincode, 
+          state: formData.state 
+        }
+      ]);
 
-      setShowPopup(true);
+    if (error) throw error;
+
+    // 3. Status clear karein aur Popup dikhayein
+    setStatus("");
+    
+    // Popup mein amount dikhane ke liye humne submittedAmount use kiya hai
+    setShowPopup(true);
+
+    // 4. Form ko 1 second baad reset karein taaki UI smooth lage
+    setTimeout(() => {
       setFormData({
         loanAmount: prefillLoan,
-        fullName: "", state: "",
-        pincode: "", mobile: "+91",
+        fullName: "", 
+        state: "",
+        pincode: "", 
+        mobile: "+91",
       });
-      setStatus("");
-    } catch (err) {
-      console.error(err);
-      setStatus("❌ Submission failed: " + err.message);
-    }
-  };
+    }, 1000);
+
+  } catch (err) {
+    console.error("Supabase Error:", err);
+    // Timeout error ko user-friendly banayein
+    const errorMsg = err.message === "Failed to fetch" 
+      ? "Connection timed out. Check your internet or Supabase URL." 
+      : err.message;
+    setStatus("❌ Submission failed: " + errorMsg);
+  }
+};
+
+
+
 
   const handlePopupOk = () => {
     setShowPopup(false);
