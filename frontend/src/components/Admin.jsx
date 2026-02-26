@@ -46,16 +46,40 @@ const Admin = () => {
     }
   }, [selectedDate, loans]);
 
-  // Excel Fix: Date ko string format mein bhejna taaki ##### na aaye
+  // Specific Row Delete karne ke liye
+  const deleteSpecific = async (id) => {
+    if (window.confirm("Kya aap ye entry delete karna chahte hain?")) {
+      const { error } = await supabase.from('loans').delete().eq('id', id);
+      if (error) alert("Error: " + error.message);
+      else fetchLoans(); // Refresh data
+    }
+  };
+
+  // Selected Date ka poora data delete karne ke liye
+  const deleteByDate = async () => {
+    if (!selectedDate) return;
+    if (window.confirm(`⚠️ WARNING: Kya aap ${selectedDate} ka SAARA data delete karna chahte hain?`)) {
+      // Supabase range delete logic
+      const { error } = await supabase
+        .from('loans')
+        .delete()
+        .gte('created_at', `${selectedDate}T00:00:00`)
+        .lte('created_at', `${selectedDate}T23:59:59`);
+
+      if (error) alert("Error: " + error.message);
+      else {
+        alert("Date wise data deleted!");
+        setSelectedDate("");
+        fetchLoans();
+      }
+    }
+  };
+
   const downloadExcel = () => {
     if (filteredLoans.length === 0) return alert("No data to download!");
-    
-    // Column Headers
     const headers = ["Name", "Amount", "Mobile", "Pincode", "State", "Date"].join(",");
-    
-    // Data Rows (Special fix for Date: wrapping in quotes)
     const rows = filteredLoans.map(loan => {
-      const formattedDate = new Date(loan.created_at).toLocaleDateString('en-GB'); // DD/MM/YYYY
+      const formattedDate = new Date(loan.created_at).toLocaleDateString('en-GB');
       return `"${loan.full_name}","${loan.loan_amount}","${loan.mobile}","${loan.pincode}","${loan.state}","${formattedDate}"`;
     }).join("\n");
 
@@ -93,11 +117,18 @@ const Admin = () => {
       </nav>
 
       <div style={{ maxWidth: '1200px', margin: '30px auto', padding: '0 20px' }}>
-        <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '30px', display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'space-between' }}>
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: 'bold' }}>FILTER DATE: </label>
-            <input type="date" value={selectedDate} style={{ padding: '8px' }} onChange={(e) => setSelectedDate(e.target.value)} />
-            {selectedDate && <button onClick={() => setSelectedDate("")} style={{ marginLeft: '10px', color: '#4e73df', border: 'none', background: 'none', cursor: 'pointer' }}>Clear</button>}
+        <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '30px', display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div>
+                <label style={{ fontSize: '12px', fontWeight: 'bold' }}>FILTER DATE: </label>
+                <input type="date" value={selectedDate} style={{ padding: '8px' }} onChange={(e) => setSelectedDate(e.target.value)} />
+                {selectedDate && <button onClick={() => setSelectedDate("")} style={{ marginLeft: '10px', color: '#4e73df', border: 'none', background: 'none', cursor: 'pointer' }}>Clear</button>}
+            </div>
+            {selectedDate && (
+                <button onClick={deleteByDate} style={{ background: '#e74a3b', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}>
+                    🗑️ Delete This Date
+                </button>
+            )}
           </div>
           <button onClick={downloadExcel} style={{ background: '#1cc88a', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
             📥 Download Excel
@@ -115,19 +146,29 @@ const Admin = () => {
                   <th style={thStyle}>PINCODE</th>
                   <th style={thStyle}>STATE</th>
                   <th style={thStyle}>DATE</th>
+                  <th style={thStyle}>ACTION</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredLoans.map((loan) => (
-                  <tr key={loan.id} style={{ borderBottom: '1px solid #e3e6f0' }}>
-                    <td style={tdStyle}>{loan.full_name}</td>
-                    <td style={tdStyle}>₹{loan.loan_amount}</td>
-                    <td style={tdStyle}>{loan.mobile}</td>
-                    <td style={tdStyle}>{loan.pincode}</td>
-                    <td style={tdStyle}>{loan.state}</td>
-                    <td style={tdStyle}>{new Date(loan.created_at).toLocaleDateString('en-IN')}</td>
-                  </tr>
-                ))}
+                {filteredLoans.length === 0 ? (
+                    <tr><td colSpan="7" style={{textAlign: 'center', padding: '20px'}}>No records found.</td></tr>
+                ) : (
+                    filteredLoans.map((loan) => (
+                    <tr key={loan.id} style={{ borderBottom: '1px solid #e3e6f0' }}>
+                        <td style={tdStyle}>{loan.full_name}</td>
+                        <td style={tdStyle}>₹{loan.loan_amount}</td>
+                        <td style={tdStyle}>{loan.mobile}</td>
+                        <td style={tdStyle}>{loan.pincode}</td>
+                        <td style={tdStyle}>{loan.state}</td>
+                        <td style={tdStyle}>{new Date(loan.created_at).toLocaleDateString('en-IN')}</td>
+                        <td style={tdStyle}>
+                            <button onClick={() => deleteSpecific(loan.id)} style={{ color: '#e74a3b', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                    ))
+                )}
               </tbody>
             </table>
           </div>
